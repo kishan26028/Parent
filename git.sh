@@ -12,3 +12,4 @@ git submodule foreach -q --recursive '
         git checkout main || echo "Failed to switch branch for $name"
     fi
 '
+cd be && git checkout be && git checkout fe
