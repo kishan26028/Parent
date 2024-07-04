@@ -6,7 +6,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clone":"chmod +x git.sh && ./git.sh"
+    "clone":"./git.sh"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
