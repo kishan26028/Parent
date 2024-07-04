@@ -1,16 +1,26 @@
 #!/bin/bash
 
-# Command 1: Initialize submodules
+# Ensure the script is run from the root directory of the repository
+if [ ! -f ".gitmodules" ]; then
+  echo ".gitmodules file not found in the current directory."
+  exit 1
+fi
+
+# Read the .gitmodules file
 git submodule init
 
-# Command 2: Update submodules
-git submodule update --recursive --remote
+# Navigate to the apps directory
+cd apps || { echo "Directory 'apps' not found."; exit 1; }
 
-# Command 3: Checkout submodule branch from ".invalid" to "main"
-git submodule foreach -q --recursive '
-    if [ "$(git rev-parse --abbrev-ref HEAD)" = ".invalid" ]; then
-        git checkout main || echo "Failed to switch branch for $name"
-    fi
-'
+# Iterate through the submodules
+for submodule in $(grep path ../.gitmodules | awk '{print $3}'); do
+  # Get the URL of the submodule repository
+  submodule_url=$(git config --file ../.gitmodules --get submodule."$submodule".url)
 
-cd be && git checkout be && cd fe &&git checkout fe
+  # Clone the submodule repository
+  echo "Cloning submodule: $submodule from $submodule_url"
+  git clone "$submodule_url" "$submodule" || { echo "Failed to clone $submodule. Skipping."; continue; }
+  git checkout main
+done
+
+echo "Submodule cloning process completed."
