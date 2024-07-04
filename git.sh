@@ -27,11 +27,13 @@ while read -r line; do
         
         # Clone the submodule repository
         echo "Cloning $submodule_name from $submodule_url..."
-        git clone $submodule_url $submodule_name || {
-            echo "Failed to clone $submodule_name. Skipping..."
+        if ! git clone $submodule_url $submodule_name; then
+            echo "Failed to clone $submodule_name. Removing directory..."
+            rm -rf $submodule_name
             continue
-        }
+        fi
     fi
 done <<< "$submodules"
 
 echo "Submodule cloning process completed."
+
