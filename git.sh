@@ -1,26 +1,37 @@
 #!/bin/bash
 
-# Ensure the script is run from the root directory of the repository
-if [ ! -f ".gitmodules" ]; then
-  echo ".gitmodules file not found in the current directory."
-  exit 1
+# Ensure the script exits if any command fails
+set -e
+
+# Check if .gitmodules file exists
+if [ ! -f .gitmodules ]; then
+    echo ".gitmodules file not found!"
+    exit 1
 fi
 
-# Read the .gitmodules file
-git submodule init
+# Parse .gitmodules to extract submodule information
+submodules=$(awk '/\[submodule /{flag=1;next}/\[/{flag=0}flag' .gitmodules)
 
-# Navigate to the apps directory
-cd ./apps || { echo "Directory 'apps' not found."; exit 1; }
+# Change to the apps directory
+cd apps
 
-# Iterate through the submodules
-for submodule in $(grep path ../.gitmodules | awk '{print $3}'); do
-  # Get the URL of the submodule repository
-  submodule_url=$(git config --file ../.gitmodules --get submodule."$submodule".url)
-
-  # Clone the submodule repository
-  echo "Cloning submodule: $submodule from $submodule_url"
-  git clone "$submodule_url" "$submodule" || { echo "Failed to clone $submodule. Skipping."; continue; }
-  git checkout main
-done
+# Iterate over each submodule
+while read -r line; do
+    if [[ $line == path* ]]; then
+        # Extract the submodule name and path
+        submodule_path=$(echo $line | cut -d' ' -f3)
+        submodule_name=$(basename $submodule_path)
+    elif [[ $line == url* ]]; then
+        # Extract the submodule URL
+        submodule_url=$(echo $line | cut -d' ' -f3)
+        
+        # Clone the submodule repository
+        echo "Cloning $submodule_name from $submodule_url..."
+        git clone $submodule_url $submodule_name || {
+            echo "Failed to clone $submodule_name. Skipping..."
+            continue
+        }
+    fi
+done <<< "$submodules"
 
 echo "Submodule cloning process completed."
